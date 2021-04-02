@@ -151,6 +151,39 @@ export default class Block {
 		}
 	}
 
+	add_error_handler(context) {
+		if(!this.has_update_method) return context;
+
+		return b`return @error_handler(function() { ${context} });`;
+
+		console.log(this.renderer);
+
+		let component = this.renderer.component;
+		let on_error = component.node_for_declaration.get("onError");
+		let on_error_method = on_error && on_error.type ==  'ImportSpecifier';
+
+		let parent = this.parent;
+		let path = [component.name.name];
+		while(!on_error_method && parent)
+		{	
+			component = parent.renderer.component;
+		 	on_error = component.node_for_declaration.get("onError");
+		 	on_error_method = on_error && on_error.type ==  'ImportSpecifier';
+			parent = parent.parent;
+			path.push(component.name.name);
+		}
+
+		console.log("compoment path :"+ path.join(" > "));
+
+		if(on_error_method) {
+			console.warn("onError location: " + component.name.name);
+		}		
+		
+		return on_error_method 
+			? b`return @error_handler(function() { ${context} });`
+			: context;
+	};
+	
 	add_dependencies(dependencies: Set<string>) {
 		dependencies.forEach(dependency => {
 			this.dependencies.add(dependency);
@@ -311,8 +344,10 @@ export default class Block {
 				}
 
 				properties.update = x`function #update(${ctx}, ${dirty}) {
-					${this.maintain_context && b`#ctx = ${ctx};`}
-					${this.chunks.update}
+					${this.add_error_handler(b`
+						${this.maintain_context && b`#ctx = ${ctx};`}
+						${this.chunks.update}
+					`)}
 				}`;
 			}
 		}
@@ -411,7 +446,7 @@ export default class Block {
 			}
 		`;
 
-		return body;
+		return this.add_error_handler(body);
 	}
 
 	has_content(): boolean {

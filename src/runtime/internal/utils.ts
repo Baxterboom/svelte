@@ -1,4 +1,5 @@
 import { Readable } from 'svelte/store';
+import { get_current_component } from './lifecycle';
 
 export function noop() {}
 
@@ -30,6 +31,29 @@ export function blank_object() {
 
 export function run_all(fns) {
 	fns.forEach(run);
+}
+
+// export function error_capture(){
+// 	const onerror = window.onerror || noop;
+// 	window.onerror = function(e) {
+// 		error_handle(e);
+// 		onerror(e);
+// 	};
+// }
+
+export function error_handler(fn) {
+	try { 
+		return fn(); 
+	} 
+	catch(e) {
+		error_handle(e); 
+	}
+}
+
+export function error_handle(e) {
+	const subscribers = get_current_component().$$.on_error;
+	for(let item in subscribers) if(subscribers[item](e) === false) return;
+	console.error(e);
 }
 
 export function is_function(thing: any): thing is Function {

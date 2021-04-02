@@ -116,6 +116,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		// lifecycle
 		on_mount: [],
+		on_error: [],
 		on_destroy: [],
 		on_disconnect: [],
 		before_update: [],
