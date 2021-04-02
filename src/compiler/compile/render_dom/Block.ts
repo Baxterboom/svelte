@@ -151,6 +151,10 @@ export default class Block {
 		}
 	}
 
+	add_error_handler(context) {
+		return b`return @error_handler(function() { ${context} });`
+	};
+
 	add_dependencies(dependencies: Set<string>) {
 		dependencies.forEach(dependency => {
 			this.dependencies.add(dependency);
@@ -311,8 +315,10 @@ export default class Block {
 				}
 
 				properties.update = x`function #update(${ctx}, ${dirty}) {
-					${this.maintain_context && b`#ctx = ${ctx};`}
-					${this.chunks.update}
+					${this.add_error_handler(b`
+						${this.maintain_context && b`#ctx = ${ctx};`}
+						${this.chunks.update}
+					`)}
 				}`;
 			}
 		}
@@ -385,30 +391,32 @@ export default class Block {
 		const block = dev && this.get_unique_name('block');
 
 		const body = b`
-			${this.chunks.declarations}
+			${this.add_error_handler(b`
+				${this.chunks.declarations}
 
-			${Array.from(this.variables.values()).map(({ id, init }) => {
-				return init
-					? b`let ${id} = ${init}`
-					: b`let ${id}`;
-			})}
+				${Array.from(this.variables.values()).map(({ id, init }) => {
+					return init
+						? b`let ${id} = ${init}`
+						: b`let ${id}`;
+				})}
 
-			${this.chunks.init}
+				${this.chunks.init}
 
-			${dev
-				? b`
-					const ${block} = ${return_value};
-					@dispatch_dev("SvelteRegisterBlock", {
-						block: ${block},
-						id: ${this.name || 'create_fragment'}.name,
-						type: "${this.type}",
-						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
-						ctx: #ctx
-					});
-					return ${block};`
-				: b`
-					return ${return_value};`
-			}
+				${dev
+					? b`
+						const ${block} = ${return_value};
+						@dispatch_dev("SvelteRegisterBlock", {
+							block: ${block},
+							id: ${this.name || 'create_fragment'}.name,
+							type: "${this.type}",
+							source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+							ctx: #ctx
+						});
+						return ${block};`
+					: b`
+						return ${return_value};`
+				}
+			`)}
 		`;
 
 		return body;
