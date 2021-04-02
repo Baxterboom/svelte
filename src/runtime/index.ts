@@ -2,6 +2,7 @@ import './ambient';
 
 export {
 	onMount,
+	onError,
 	onDestroy,
 	beforeUpdate,
 	afterUpdate,
