@@ -445,9 +445,9 @@ export default function dom(
 				${/* before reactive declarations */ props_inject}
 
 				${reactive_declarations.length > 0 && b`
-				$$self.$$.update = () => {
-					${reactive_declarations}
-				};
+					$$self.$$.update = () => {
+						${block.add_error_handler(reactive_declarations)}
+					};
 				`}
 
 				${fixed_reactive_declarations}
