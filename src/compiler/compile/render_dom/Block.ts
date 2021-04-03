@@ -152,8 +152,7 @@ export default class Block {
 	}
 
 	add_error_handler(context) {
-		if(!this.has_update_method) return context;
-
+		//if(!this.has_update_method) return context;
 		return b`return @error_handler(function() { ${context} });`;
 
 		console.log(this.renderer);
